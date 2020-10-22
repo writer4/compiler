@@ -1,0 +1,27 @@
+// White space
+ws = _{ " " | "\t" }
+ws0 = _{ ws* }
+ws1 = _{ ws+ }
+
+newline = _{ "\n" | "\r\n" | "\r" }
+
+// Helper
+statement_end = _{ newline | EOI }
+number_sign = { "#" }
+text = { (!newline ~ ANY)* }
+
+// Statements
+empty_line_statement = { ws0 ~ statement_end }
+header_statement = {
+    number_sign ~ number_sign? ~ number_sign? ~
+    number_sign? ~ number_sign? ~ number_sign? ~
+    ws1 ~ text ~ statement_end
+}
+paragraph_statement = { text ~ statement_end }
+
+statement = {
+    empty_line_statement | header_statement | paragraph_statement
+}
+
+// Document
+document = { SOI ~ (!EOI ~ statement)* ~ EOI }
