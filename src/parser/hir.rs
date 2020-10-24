@@ -81,7 +81,7 @@ fn parse_text_segments<'a>(
 
     let mut idx = 0;
     while idx < segments_lir.len() {
-        match &segments_lir[idx] {
+        match segments_lir[idx] {
             lir::TextSegment::Text(text) => {
                 segments.push(hir::TextSegment::Text(text));
                 idx += 1;
@@ -95,14 +95,14 @@ fn parse_text_segments<'a>(
                     &segments_lir[idx + 1..]
                         .into_iter()
                         .position(|segment| match segment {
-                            lir::TextSegment::Emphasis(emph_end) => emph == emph_end,
+                            lir::TextSegment::Emphasis(emph_end) => emph == *emph_end,
                             _ => false,
                         });
 
                 match offset {
                     Some(offset) => {
                         segments.push(hir::TextSegment::Emphasised {
-                            emphasis: *emph,
+                            emphasis: emph,
                             inner: parse_text_segments(&segments_lir[idx + 1..idx + 1 + offset])?,
                         });
                         idx += offset + 2;
