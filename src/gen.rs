@@ -1,42 +1,35 @@
-use crate::ast;
+use crate::ast::hir;
 
-pub fn generate(document: &ast::Document<'_>) -> String {
+pub fn generate(document: &hir::Document<'_>) -> String {
     let mut ouput = r#"<div class="writer-doc">"#.to_string();
 
-    let mut statements = document.statements.iter().peekable();
+    let mut statements = document.statements.iter();
     while let Some(statement) = statements.next() {
         match statement {
-            ast::Statement::EmptyLine(ast::EmptyLineStatement) => (),
-            ast::Statement::Header(ast::HeaderStatement { header_type, text }) => {
+            hir::Statement::Header(hir::HeaderStatement { header_type, text }) => {
                 let htag = match header_type {
-                    ast::HeaderType::H1 => "h1",
-                    ast::HeaderType::H2 => "h2",
-                    ast::HeaderType::H3 => "h3",
-                    ast::HeaderType::H4 => "h4",
-                    ast::HeaderType::H5 => "h5",
-                    ast::HeaderType::H6 => "h6",
+                    hir::HeaderType::H1 => "h1",
+                    hir::HeaderType::H2 => "h2",
+                    hir::HeaderType::H3 => "h3",
+                    hir::HeaderType::H4 => "h4",
+                    hir::HeaderType::H5 => "h5",
+                    hir::HeaderType::H6 => "h6",
                 };
 
-                ouput += &format!(
-                    "<{htag}>{text}</{htag}>",
-                    htag = htag,
-                    text = html_escape::encode_text(text)
-                );
-            }
-            ast::Statement::Paragraph(ast::ParagraphStatement { text }) => {
-                let mut content = html_escape::encode_text(text);
-
-                while let Some(ast::Statement::Paragraph(_)) = statements.peek() {
-                    match statements.next().unwrap() {
-                        ast::Statement::Paragraph(ast::ParagraphStatement { text }) => {
-                            content += " ";
-                            content += html_escape::encode_text(text);
-                        }
-                        _ => unreachable!(),
-                    }
+                let mut text_output = String::new();
+                for segment in &text.segments {
+                    generate_text(segment, &mut text_output);
                 }
 
-                ouput += &format!("<p>{}</p>", content);
+                ouput += &format!("<{htag}>{text}</{htag}>", htag = htag, text = text_output);
+            }
+            hir::Statement::Paragraph(hir::ParagraphStatement { text }) => {
+                let mut text_output = String::new();
+                for segment in &text.segments {
+                    generate_text(segment, &mut text_output);
+                }
+
+                ouput += &format!("<p>{}</p>", text_output);
             }
         }
     }
@@ -44,4 +37,23 @@ pub fn generate(document: &ast::Document<'_>) -> String {
     ouput += "</div>";
 
     ouput
+}
+
+fn generate_text(segment: &hir::TextSegment<'_>, output: &mut String) {
+    match segment {
+        hir::TextSegment::Text(text) => *output += &html_escape::encode_text(text),
+        hir::TextSegment::Break => *output += "<br />",
+        hir::TextSegment::Emphasised { emphasis, inner } => {
+            let (tag_opening, tag_closing) = match emphasis {
+                hir::Emphasis::Bold => ("<b>", "</b>"),
+                hir::Emphasis::Italic => ("<i>", "</i>"),
+                hir::Emphasis::Strikethrough => ("<s>", "</s>"),
+            };
+            *output += tag_opening;
+            for segment in inner {
+                generate_text(segment, output);
+            }
+            *output += tag_closing;
+        }
+    }
 }

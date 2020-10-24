@@ -1,4 +1,4 @@
-use super::ast;
+use crate::ast::lir;
 use pest::{iterators::Pair, prec_climber::PrecClimber, Parser};
 use std::convert::TryFrom;
 
@@ -10,7 +10,7 @@ pub enum Error {
     Pest(#[from] pest::error::Error<Rule>),
 }
 
-pub fn parse(code: &str) -> Result<ast::Document<'_>> {
+pub fn parse(code: &str) -> Result<lir::Document<'_>> {
     // Parse code as document pair
     let document = WriterParser::parse(Rule::document, code)?.next().unwrap();
 
@@ -18,7 +18,7 @@ pub fn parse(code: &str) -> Result<ast::Document<'_>> {
     let prec = PrecClimber::new(vec![]);
 
     // Parse pair to ast
-    Ok(ast::Document::parse(document, &prec)?)
+    Ok(lir::Document::parse(document, &prec)?)
 }
 
 #[derive(pest_derive::Parser)]
@@ -45,7 +45,7 @@ where
     }
 }
 
-impl<'a> Parse<'a> for ast::Document<'a> {
+impl<'a> Parse<'a> for lir::Document<'a> {
     fn parse(pair: Pair<'a, Rule>, prec: &PrecClimber<Rule>) -> Result<Self> {
         let document = pair.into_inner();
 
@@ -55,19 +55,19 @@ impl<'a> Parse<'a> for ast::Document<'a> {
                 Rule::EOI => false,
                 _ => unreachable!(),
             })
-            .map(|pair| ast::Statement::parse(pair, prec))
+            .map(|pair| lir::Statement::parse(pair, prec))
             .collect::<Result<_>>()?;
 
-        Ok(ast::Document { statements })
+        Ok(lir::Document { statements })
     }
 }
 
-impl<'a> Parse<'a> for ast::Statement<'a> {
-    fn parse(pair: Pair<'a, Rule>, _prec: &PrecClimber<Rule>) -> Result<Self> {
+impl<'a> Parse<'a> for lir::Statement<'a> {
+    fn parse(pair: Pair<'a, Rule>, prec: &PrecClimber<Rule>) -> Result<Self> {
         let statement = pair.into_inner().next().unwrap();
 
         let statement = match statement.as_rule() {
-            Rule::empty_line_statement => ast::Statement::EmptyLine(ast::EmptyLineStatement),
+            Rule::empty_line_statement => lir::Statement::EmptyLine(lir::EmptyLineStatement),
             Rule::header_statement => {
                 let mut header_statement = statement.into_inner();
                 let mut header_type = 0;
@@ -75,32 +75,44 @@ impl<'a> Parse<'a> for ast::Statement<'a> {
                     let pair = header_statement.next().unwrap();
                     match pair.as_rule() {
                         Rule::number_sign => header_type += 1,
-                        Rule::text => break pair.as_str(),
+                        Rule::text => break lir::Text::parse(pair, prec)?,
                         _ => unreachable!(),
                     }
                 };
 
-                ast::Statement::Header(ast::HeaderStatement {
-                    header_type: ast::HeaderType::try_from(header_type).unwrap(),
+                lir::Statement::Header(lir::HeaderStatement {
+                    header_type: lir::HeaderType::try_from(header_type).unwrap(),
                     text,
                 })
             }
-            Rule::paragraph_statement => {
-                let mut paragraph_statement = statement.into_inner();
-                let text = {
-                    let pair = paragraph_statement.next().unwrap();
-                    match pair.as_rule() {
-                        Rule::text => pair.as_str(),
-                        _ => unreachable!(),
-                    }
-                };
-
-                ast::Statement::Paragraph(ast::ParagraphStatement { text })
-            }
+            Rule::paragraph_statement => lir::Statement::Paragraph(lir::ParagraphStatement {
+                text: lir::Text::parse(statement.into_inner().next().unwrap(), prec)?,
+            }),
             _ => unreachable!(),
         };
 
         Ok(statement)
+    }
+}
+
+impl<'a> Parse<'a> for lir::Text<'a> {
+    fn parse(pair: Pair<'a, Rule>, prec: &PrecClimber<Rule>) -> Result<Self> {
+        assert!(pair.as_rule() == Rule::text);
+        let text = pair.into_inner();
+
+        let segments = text
+            .map(|pair| match pair.as_rule() {
+                Rule::emph_bold => lir::TextSegment::Emphasis(lir::Emphasis::Bold),
+                Rule::emph_italic => lir::TextSegment::Emphasis(lir::Emphasis::Italic),
+                Rule::emph_strikethrough => {
+                    lir::TextSegment::Emphasis(lir::Emphasis::Strikethrough)
+                }
+                Rule::text_segment => lir::TextSegment::Text(pair.as_str()),
+                _ => unreachable!(),
+            })
+            .collect();
+
+        Ok(lir::Text { segments })
     }
 }
 
@@ -121,7 +133,7 @@ mod tests {
             .unwrap();
 
         match Parse::parse(pair, &prec()).unwrap() {
-            ast::Statement::EmptyLine(ast::EmptyLineStatement) => (),
+            lir::Statement::EmptyLine(lir::EmptyLineStatement) => (),
             _ => panic!(),
         }
     }
@@ -141,8 +153,7 @@ lorem ipsum
 alpha beta 123!
 
 ## h2
-text
-"###;
+text"###;
 
         let _ = parse(code).unwrap();
     }

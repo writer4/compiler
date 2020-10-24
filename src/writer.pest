@@ -8,7 +8,16 @@ newline = _{ "\n" | "\r\n" | "\r" }
 // Helper
 statement_end = _{ newline | EOI }
 number_sign = { "#" }
-text = { (!newline ~ ANY)* }
+
+// Emphasis
+emph_bold = { "**" }
+emph_italic = { "__" }
+emph_strikethrough = { "~~" }
+emph = _{ emph_bold | emph_italic | emph_strikethrough }
+
+// Text
+text_segment = { (!emph ~ !statement_end ~ ANY)+ }
+text = { (!statement_end ~ emph* ~ text_segment?)* }
 
 // Statements
 empty_line_statement = { ws0 ~ statement_end }
