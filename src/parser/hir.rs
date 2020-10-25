@@ -147,6 +147,10 @@ fn parse_list<'a>(
                     _ => None,
                 };
 
+                if text_segments.is_empty() && child.is_some() {
+                    text_segments.push(hir::TextSegment::Break);
+                }
+
                 items.push(hir::ListItem {
                     text: hir::Text {
                         segments: text_segments,
