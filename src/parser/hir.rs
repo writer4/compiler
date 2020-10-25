@@ -210,3 +210,65 @@ fn parse_text_segments<'a>(
 
     Ok(segments)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn headers() {
+        let doc_lir = lir::Document {
+            statements: vec![
+                lir::Statement::Header(lir::HeaderStatement {
+                    header_type: lir::HeaderType::H1,
+                    text: lir::Text {
+                        segments: vec![
+                            lir::TextSegment::Text("Hello "),
+                            lir::TextSegment::Emphasis(lir::Emphasis::Italic),
+                            lir::TextSegment::Text("World"),
+                            lir::TextSegment::Emphasis(lir::Emphasis::Italic),
+                            lir::TextSegment::Text("!"),
+                        ],
+                    },
+                }),
+                lir::Statement::Header(lir::HeaderStatement {
+                    header_type: lir::HeaderType::H3,
+                    text: lir::Text {
+                        segments: vec![
+                            lir::TextSegment::Emphasis(lir::Emphasis::Strikethrough),
+                            lir::TextSegment::Text("Subtitle"),
+                        ],
+                    },
+                }),
+            ],
+        };
+        let doc_hir = hir::Document {
+            statements: vec![
+                hir::Statement::Header(hir::HeaderStatement {
+                    header_type: hir::HeaderType::H1,
+                    text: hir::Text {
+                        segments: vec![
+                            hir::TextSegment::Text("Hello "),
+                            hir::TextSegment::Emphasised {
+                                emphasis: hir::Emphasis::Italic,
+                                inner: vec![hir::TextSegment::Text("World")],
+                            },
+                            hir::TextSegment::Text("!"),
+                        ],
+                    },
+                }),
+                hir::Statement::Header(hir::HeaderStatement {
+                    header_type: hir::HeaderType::H3,
+                    text: hir::Text {
+                        segments: vec![
+                            hir::TextSegment::Text("~~"),
+                            hir::TextSegment::Text("Subtitle"),
+                        ],
+                    },
+                }),
+            ],
+        };
+
+        assert_eq!(parse(&doc_lir).unwrap(), doc_hir);
+    }
+}
