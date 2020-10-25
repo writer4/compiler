@@ -88,6 +88,22 @@ impl<'a> Parse<'a> for lir::Statement<'a> {
             Rule::paragraph_statement => lir::Statement::Paragraph(lir::ParagraphStatement {
                 text: lir::Text::parse(statement.into_inner().next().unwrap(), prec)?,
             }),
+            Rule::list_item_statement => {
+                let mut list_item_statement = statement.into_inner();
+
+                let indentation = list_item_statement.next().unwrap();
+                let text = match list_item_statement.next() {
+                    Some(pair) if pair.as_rule() == Rule::text => lir::Text::parse(pair, prec)?,
+                    _ => lir::Text {
+                        segments: Vec::new(),
+                    },
+                };
+
+                lir::Statement::ListItem(lir::ListItemStatement {
+                    indentation: indentation.as_str().len(),
+                    text,
+                })
+            }
             _ => unreachable!(),
         };
 

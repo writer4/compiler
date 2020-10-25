@@ -8,6 +8,7 @@ newline = _{ "\n" | "\r\n" | "\r" }
 // Helper
 statement_end = _{ newline | EOI }
 number_sign = { "#" }
+indentation = { ws0 }
 
 // Emphasis
 emph_bold = { "**" }
@@ -27,9 +28,10 @@ header_statement = {
     ws1 ~ text ~ statement_end
 }
 paragraph_statement = { text ~ statement_end }
+list_item_statement = { indentation ~ "-" ~ (ws1 ~ text)? ~ statement_end }
 
 statement = {
-    empty_line_statement | header_statement | paragraph_statement
+    empty_line_statement | header_statement | list_item_statement | paragraph_statement
 }
 
 // Document

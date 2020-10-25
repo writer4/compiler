@@ -10,6 +10,7 @@ pub enum Statement<'a> {
     EmptyLine(EmptyLineStatement),
     Header(HeaderStatement<'a>),
     Paragraph(ParagraphStatement<'a>),
+    ListItem(ListItemStatement<'a>),
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -23,6 +24,12 @@ pub struct HeaderStatement<'a> {
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct ParagraphStatement<'a> {
+    pub text: Text<'a>,
+}
+
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct ListItemStatement<'a> {
+    pub indentation: usize,
     pub text: Text<'a>,
 }
 

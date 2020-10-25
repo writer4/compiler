@@ -33,10 +33,38 @@ pub fn parse<'a>(document: &lir::Document<'a>) -> Result<hir::Document<'a>> {
                     &paragraphs,
                 )?));
             }
+            lir::Statement::ListItem(list_item_stmt) => {
+                let mut list_statements = vec![Either::Left(list_item_stmt)];
+                idx += 1;
+
+                while idx < document.statements.len() {
+                    match &document.statements[idx] {
+                        lir::Statement::ListItem(list_item_stmt) => {
+                            list_statements.push(Either::Left(list_item_stmt));
+                            idx += 1;
+                        }
+                        lir::Statement::Paragraph(paragraph_stmt) => {
+                            list_statements.push(Either::Right(paragraph_stmt));
+                            idx += 1;
+                        }
+                        _ => break,
+                    }
+                }
+
+                statements.push(hir::Statement::List(hir::ListStatement {
+                    list: parse_list(&list_statements)?,
+                }));
+            }
         }
     }
 
     Ok(hir::Document { statements })
+}
+
+#[derive(Debug)]
+enum Either<L, R> {
+    Left(L),
+    Right(R),
 }
 
 fn parse_header_statement<'a>(
@@ -72,6 +100,65 @@ fn parse_paragraph_statement<'a>(
             segments: parse_text_segments(&segments)?,
         },
     })
+}
+
+fn parse_list<'a>(
+    statements: &[Either<&lir::ListItemStatement<'a>, &lir::ParagraphStatement<'a>>],
+) -> Result<hir::List<'a>> {
+    let mut items = vec![];
+
+    let mut idx = 0;
+    while idx < statements.len() {
+        match statements[idx] {
+            Either::Left(lir::ListItemStatement { indentation, text }) => {
+                idx += 1;
+
+                let mut text_segments = parse_text_segments(&text.segments)?;
+
+                while let Some(Either::Right(lir::ParagraphStatement { text })) =
+                    statements.get(idx)
+                {
+                    text_segments.push(hir::TextSegment::Break);
+                    text_segments.extend(parse_text_segments(&text.segments)?);
+                    idx += 1;
+                }
+
+                let child = match statements.get(idx) {
+                    Some(Either::Left(list_item_stmt))
+                        if list_item_stmt.indentation >= indentation + 2 =>
+                    {
+                        let start = idx;
+                        idx += 1;
+
+                        while let Some(stmt) = statements.get(idx) {
+                            match stmt {
+                                Either::Left(list_item_stmt_)
+                                    if list_item_stmt_.indentation < list_item_stmt.indentation =>
+                                {
+                                    break;
+                                }
+                                _ => (),
+                            }
+                            idx += 1;
+                        }
+
+                        Some(parse_list(&statements[start..idx])?)
+                    }
+                    _ => None,
+                };
+
+                items.push(hir::ListItem {
+                    text: hir::Text {
+                        segments: text_segments,
+                    },
+                    child,
+                });
+            }
+            Either::Right(lir::ParagraphStatement { .. }) => unreachable!(),
+        }
+    }
+
+    Ok(hir::List { items })
 }
 
 fn parse_text_segments<'a>(

@@ -9,6 +9,7 @@ pub struct Document<'a> {
 pub enum Statement<'a> {
     Header(HeaderStatement<'a>),
     Paragraph(ParagraphStatement<'a>),
+    List(ListStatement<'a>),
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -20,6 +21,22 @@ pub struct HeaderStatement<'a> {
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct ParagraphStatement<'a> {
     pub text: Text<'a>,
+}
+
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct ListStatement<'a> {
+    pub list: List<'a>,
+}
+
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct List<'a> {
+    pub items: Vec<ListItem<'a>>,
+}
+
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct ListItem<'a> {
+    pub text: Text<'a>,
+    pub child: Option<List<'a>>,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
