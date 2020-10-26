@@ -113,15 +113,17 @@ fn parse_list<'a>(
             Either::Left(lir::ListItemStatement { indentation, text }) => {
                 idx += 1;
 
-                let mut text_segments = parse_text_segments(&text.segments)?;
+                let mut text_segments = text.segments.clone();
 
                 while let Some(Either::Right(lir::ParagraphStatement { text })) =
                     statements.get(idx)
                 {
-                    text_segments.push(hir::TextSegment::Break);
-                    text_segments.extend(parse_text_segments(&text.segments)?);
+                    text_segments.push(lir::TextSegment::Break);
+                    text_segments.extend(text.segments.clone());
                     idx += 1;
                 }
+
+                let mut text_segments = parse_text_segments(&text_segments)?;
 
                 let child = match statements.get(idx) {
                     Some(Either::Left(list_item_stmt))
