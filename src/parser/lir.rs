@@ -112,7 +112,7 @@ impl<'a> Parse<'a> for lir::Statement<'a> {
 }
 
 impl<'a> Parse<'a> for lir::Text<'a> {
-    fn parse(pair: Pair<'a, Rule>, prec: &PrecClimber<Rule>) -> Result<Self> {
+    fn parse(pair: Pair<'a, Rule>, _: &PrecClimber<Rule>) -> Result<Self> {
         assert!(pair.as_rule() == Rule::text);
         let text = pair.into_inner();
 
