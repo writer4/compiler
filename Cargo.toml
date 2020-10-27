@@ -4,6 +4,10 @@ version = "0.1.0"
 authors = ["Jannik Obermann <jannik.obermann@gmail.com>"]
 edition = "2018"
 
+[features]
+default = ["html-backend"]
+html-backend = []
+
 [dependencies]
 pest = "2.1.3"
 pest_derive = "2.1.0"
