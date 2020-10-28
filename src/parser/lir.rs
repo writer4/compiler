@@ -12,7 +12,7 @@ pub enum Error {
 
 pub fn parse(code: &str) -> Result<lir::Document<'_>> {
     // Parse code as document pair
-    let document = WriterParser::parse(Rule::document, code)?.next().unwrap();
+    let document = Writer4Parser::parse(Rule::document, code)?.next().unwrap();
 
     // Create prec climber
     let prec = PrecClimber::new(vec![]);
@@ -22,8 +22,8 @@ pub fn parse(code: &str) -> Result<lir::Document<'_>> {
 }
 
 #[derive(pest_derive::Parser)]
-#[grammar = "writer.pest"]
-struct WriterParser;
+#[grammar = "writer4.pest"]
+struct Writer4Parser;
 
 trait Parse<'a>: Sized {
     /// # Panics
@@ -143,7 +143,7 @@ mod tests {
     #[test]
     fn empty_line() {
         let code = r###" "###;
-        let pair = WriterParser::parse(Rule::statement, code)
+        let pair = Writer4Parser::parse(Rule::statement, code)
             .unwrap()
             .next()
             .unwrap();

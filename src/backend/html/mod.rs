@@ -8,7 +8,7 @@ impl super::Backend for HtmlBackend {
     type Error = std::convert::Infallible;
 
     fn compile_hir(document: &hir::Document<'_>) -> Result<Self::Output, Self::Error> {
-        let mut output = r#"<div class="writer-doc">"#.to_string();
+        let mut output = r#"<div class="writer4-doc">"#.to_string();
 
         let mut statements = document.statements.iter();
         while let Some(statement) = statements.next() {

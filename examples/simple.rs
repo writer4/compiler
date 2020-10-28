@@ -14,7 +14,7 @@ Green__
 
 #[cfg(feature = "html-backend")]
 fn main() {
-    let result = compiler::compile_html(SOURCE_CODE).unwrap();
+    let result = writer4_compiler::compile_html(SOURCE_CODE).unwrap();
     println!("{}", result);
 }
 
