@@ -6,10 +6,10 @@ edition = "2018"
 
 [features]
 default = ["html-backend"]
-html-backend = []
+html-backend = ["html-escape"]
 
 [dependencies]
 pest = "2.1.3"
 pest_derive = "2.1.0"
 thiserror = "1.0.14"
-html-escape = "0.2.6"
+html-escape = { version = "0.2.6", optional = true }
