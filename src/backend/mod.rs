@@ -1,8 +1,12 @@
 #[cfg(feature = "html-backend")]
 mod html;
+#[cfg(feature = "pdf-backend")]
+mod pdf;
 
 #[cfg(feature = "html-backend")]
 pub use self::html::HtmlBackend;
+#[cfg(feature = "pdf-backend")]
+pub use self::pdf::PdfBackend;
 
 use crate::ast::hir;
 use crate::parser;
