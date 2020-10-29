@@ -143,39 +143,301 @@ mod tests {
         PrecClimber::new(vec![])
     }
 
-    #[test]
-    fn empty_line() {
-        let code = r###" "###;
-        let pair = Writer4Parser::parse(Rule::statement, code)
+    fn statement_pair(code: &str) -> Pair<Rule> {
+        Writer4Parser::parse(Rule::statement, code)
             .unwrap()
             .next()
-            .unwrap();
+            .unwrap()
+    }
 
-        match Parse::parse(pair, &prec()).unwrap() {
-            lir::Statement::EmptyLine(lir::EmptyLineStatement) => (),
-            _ => panic!(),
-        }
+    #[test]
+    fn empty_line() {
+        let pair = statement_pair(r###""###);
+        let expected = lir::Statement::EmptyLine(lir::EmptyLineStatement);
+        assert_eq!(lir::Statement::parse(pair, &prec()).unwrap(), expected);
+
+        let pair = statement_pair(r###"     "###);
+        let expected = lir::Statement::EmptyLine(lir::EmptyLineStatement);
+        assert_eq!(lir::Statement::parse(pair, &prec()).unwrap(), expected);
+    }
+
+    #[test]
+    fn comment() {
+        let pair = statement_pair(r###"//"###);
+        let expected = lir::Statement::Comment(lir::CommentStatement { text: "" });
+        assert_eq!(lir::Statement::parse(pair, &prec()).unwrap(), expected);
+
+        let pair = statement_pair(r###"// Hello World"###);
+        let expected = lir::Statement::Comment(lir::CommentStatement {
+            text: " Hello World",
+        });
+        assert_eq!(lir::Statement::parse(pair, &prec()).unwrap(), expected);
+
+        let pair = statement_pair(r###"  //xxx"###);
+        let expected = lir::Statement::Comment(lir::CommentStatement { text: "xxx" });
+        assert_eq!(lir::Statement::parse(pair, &prec()).unwrap(), expected);
+    }
+
+    #[test]
+    fn header() {
+        let pair = statement_pair(r###"# Hello World"###);
+        let expected = lir::Statement::Header(lir::HeaderStatement {
+            header_type: lir::HeaderType::H1,
+            text: lir::Text {
+                segments: vec![lir::TextSegment::Text("Hello World")],
+            },
+        });
+        assert_eq!(lir::Statement::parse(pair, &prec()).unwrap(), expected);
+
+        let pair = statement_pair(r###"##   Subtitle"###);
+        let expected = lir::Statement::Header(lir::HeaderStatement {
+            header_type: lir::HeaderType::H2,
+            text: lir::Text {
+                segments: vec![lir::TextSegment::Text("Subtitle")],
+            },
+        });
+        assert_eq!(lir::Statement::parse(pair, &prec()).unwrap(), expected);
+
+        let pair = statement_pair(r###"######   __%&%}[{~~__"###);
+        let expected = lir::Statement::Header(lir::HeaderStatement {
+            header_type: lir::HeaderType::H6,
+            text: lir::Text {
+                segments: vec![
+                    lir::TextSegment::Emphasis(lir::Emphasis::Italic),
+                    lir::TextSegment::Text("%&%}[{"),
+                    lir::TextSegment::Emphasis(lir::Emphasis::Strikethrough),
+                    lir::TextSegment::Emphasis(lir::Emphasis::Italic),
+                ],
+            },
+        });
+        assert_eq!(lir::Statement::parse(pair, &prec()).unwrap(), expected);
+
+        let pair = statement_pair(r###"###  ~~Strikethrough~~"###);
+        let expected = lir::Statement::Header(lir::HeaderStatement {
+            header_type: lir::HeaderType::H3,
+            text: lir::Text {
+                segments: vec![
+                    lir::TextSegment::Emphasis(lir::Emphasis::Strikethrough),
+                    lir::TextSegment::Text("Strikethrough"),
+                    lir::TextSegment::Emphasis(lir::Emphasis::Strikethrough),
+                ],
+            },
+        });
+        assert_eq!(lir::Statement::parse(pair, &prec()).unwrap(), expected);
+    }
+
+    #[test]
+    fn paragraph() {
+        let pair = statement_pair(r###"lorem ipsum"###);
+        let expected = lir::Statement::Paragraph(lir::ParagraphStatement {
+            text: lir::Text {
+                segments: vec![lir::TextSegment::Text("lorem ipsum")],
+            },
+        });
+        assert_eq!(lir::Statement::parse(pair, &prec()).unwrap(), expected);
+
+        let pair = statement_pair(r###"   lorem __**ipsum**__!"###);
+        let expected = lir::Statement::Paragraph(lir::ParagraphStatement {
+            text: lir::Text {
+                segments: vec![
+                    lir::TextSegment::Text("   lorem "),
+                    lir::TextSegment::Emphasis(lir::Emphasis::Italic),
+                    lir::TextSegment::Emphasis(lir::Emphasis::Bold),
+                    lir::TextSegment::Text("ipsum"),
+                    lir::TextSegment::Emphasis(lir::Emphasis::Bold),
+                    lir::TextSegment::Emphasis(lir::Emphasis::Italic),
+                    lir::TextSegment::Text("!"),
+                ],
+            },
+        });
+        assert_eq!(lir::Statement::parse(pair, &prec()).unwrap(), expected);
+
+        let pair = statement_pair(r###"#not a header"###);
+        let expected = lir::Statement::Paragraph(lir::ParagraphStatement {
+            text: lir::Text {
+                segments: vec![lir::TextSegment::Text("#not a header")],
+            },
+        });
+        assert_eq!(lir::Statement::parse(pair, &prec()).unwrap(), expected);
+
+        let pair = statement_pair(r###"-not a list"###);
+        let expected = lir::Statement::Paragraph(lir::ParagraphStatement {
+            text: lir::Text {
+                segments: vec![lir::TextSegment::Text("-not a list")],
+            },
+        });
+        assert_eq!(lir::Statement::parse(pair, &prec()).unwrap(), expected);
+    }
+
+    #[test]
+    fn list_item() {
+        let pair = statement_pair(r###"- list item"###);
+        let expected = lir::Statement::ListItem(lir::ListItemStatement {
+            indentation: 0,
+            text: lir::Text {
+                segments: vec![lir::TextSegment::Text("list item")],
+            },
+        });
+        assert_eq!(lir::Statement::parse(pair, &prec()).unwrap(), expected);
+
+        let pair = statement_pair(r###"  -     list item"###);
+        let expected = lir::Statement::ListItem(lir::ListItemStatement {
+            indentation: 2,
+            text: lir::Text {
+                segments: vec![lir::TextSegment::Text("list item")],
+            },
+        });
+        assert_eq!(lir::Statement::parse(pair, &prec()).unwrap(), expected);
+
+        let pair = statement_pair(r###"   - list **item**"###);
+        let expected = lir::Statement::ListItem(lir::ListItemStatement {
+            indentation: 3,
+            text: lir::Text {
+                segments: vec![
+                    lir::TextSegment::Text("list "),
+                    lir::TextSegment::Emphasis(lir::Emphasis::Bold),
+                    lir::TextSegment::Text("item"),
+                    lir::TextSegment::Emphasis(lir::Emphasis::Bold),
+                ],
+            },
+        });
+        assert_eq!(lir::Statement::parse(pair, &prec()).unwrap(), expected);
     }
 
     #[test]
     fn empty() {
         let code = r###""###;
+        let expected = lir::Document { statements: vec![] };
+        assert_eq!(parse(code).unwrap(), expected);
 
-        let _ = parse(code).unwrap();
+        let code = r###" "###;
+        let expected = lir::Document {
+            statements: vec![lir::Statement::EmptyLine(lir::EmptyLineStatement)],
+        };
+        assert_eq!(parse(code).unwrap(), expected);
     }
 
     #[test]
-    fn simple() {
-        let code = r###"# H1
+    fn combined() {
+        let code = r###"
+# ~~Hello Wor__ld
 
+// a random comment: 2 + 2 = 4
+-a,b,c,d,e
 lorem ipsum
 alpha beta 123!
+- A
+- ~~B~~
+  - C
+  - D
+  **12345**67890
+  //
+- E
 
-// lorem
-//
+- F
+
 ## h2
-text"###;
-
-        let _ = parse(code).unwrap();
+..."###;
+        let expected = lir::Document {
+            statements: vec![
+                lir::Statement::EmptyLine(lir::EmptyLineStatement),
+                lir::Statement::Header(lir::HeaderStatement {
+                    header_type: lir::HeaderType::H1,
+                    text: lir::Text {
+                        segments: vec![
+                            lir::TextSegment::Emphasis(lir::Emphasis::Strikethrough),
+                            lir::TextSegment::Text("Hello Wor"),
+                            lir::TextSegment::Emphasis(lir::Emphasis::Italic),
+                            lir::TextSegment::Text("ld"),
+                        ],
+                    },
+                }),
+                lir::Statement::EmptyLine(lir::EmptyLineStatement),
+                lir::Statement::Comment(lir::CommentStatement {
+                    text: " a random comment: 2 + 2 = 4",
+                }),
+                lir::Statement::Paragraph(lir::ParagraphStatement {
+                    text: lir::Text {
+                        segments: vec![lir::TextSegment::Text("-a,b,c,d,e")],
+                    },
+                }),
+                lir::Statement::Paragraph(lir::ParagraphStatement {
+                    text: lir::Text {
+                        segments: vec![lir::TextSegment::Text("lorem ipsum")],
+                    },
+                }),
+                lir::Statement::Paragraph(lir::ParagraphStatement {
+                    text: lir::Text {
+                        segments: vec![lir::TextSegment::Text("alpha beta 123!")],
+                    },
+                }),
+                lir::Statement::ListItem(lir::ListItemStatement {
+                    indentation: 0,
+                    text: lir::Text {
+                        segments: vec![lir::TextSegment::Text("A")],
+                    },
+                }),
+                lir::Statement::ListItem(lir::ListItemStatement {
+                    indentation: 0,
+                    text: lir::Text {
+                        segments: vec![
+                            lir::TextSegment::Emphasis(lir::Emphasis::Strikethrough),
+                            lir::TextSegment::Text("B"),
+                            lir::TextSegment::Emphasis(lir::Emphasis::Strikethrough),
+                        ],
+                    },
+                }),
+                lir::Statement::ListItem(lir::ListItemStatement {
+                    indentation: 2,
+                    text: lir::Text {
+                        segments: vec![lir::TextSegment::Text("C")],
+                    },
+                }),
+                lir::Statement::ListItem(lir::ListItemStatement {
+                    indentation: 2,
+                    text: lir::Text {
+                        segments: vec![lir::TextSegment::Text("D")],
+                    },
+                }),
+                lir::Statement::Paragraph(lir::ParagraphStatement {
+                    text: lir::Text {
+                        segments: vec![
+                            lir::TextSegment::Text("  "),
+                            lir::TextSegment::Emphasis(lir::Emphasis::Bold),
+                            lir::TextSegment::Text("12345"),
+                            lir::TextSegment::Emphasis(lir::Emphasis::Bold),
+                            lir::TextSegment::Text("67890"),
+                        ],
+                    },
+                }),
+                lir::Statement::Comment(lir::CommentStatement { text: "" }),
+                lir::Statement::ListItem(lir::ListItemStatement {
+                    indentation: 0,
+                    text: lir::Text {
+                        segments: vec![lir::TextSegment::Text("E")],
+                    },
+                }),
+                lir::Statement::EmptyLine(lir::EmptyLineStatement),
+                lir::Statement::ListItem(lir::ListItemStatement {
+                    indentation: 0,
+                    text: lir::Text {
+                        segments: vec![lir::TextSegment::Text("F")],
+                    },
+                }),
+                lir::Statement::EmptyLine(lir::EmptyLineStatement),
+                lir::Statement::Header(lir::HeaderStatement {
+                    header_type: lir::HeaderType::H2,
+                    text: lir::Text {
+                        segments: vec![lir::TextSegment::Text("h2")],
+                    },
+                }),
+                lir::Statement::Paragraph(lir::ParagraphStatement {
+                    text: lir::Text {
+                        segments: vec![lir::TextSegment::Text("...")],
+                    },
+                }),
+            ],
+        };
+        assert_eq!(parse(code).unwrap(), expected);
     }
 }
