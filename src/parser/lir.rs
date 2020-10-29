@@ -129,7 +129,23 @@ impl<'a> Parse<'a> for lir::Text<'a> {
                 Rule::text_segment => lir::TextSegment::Text(pair.as_str()),
                 _ => unreachable!(),
             })
-            .collect();
+            .collect::<Vec<_>>();
+
+        if let Some(lir::TextSegment::Text(text)) = segments.last_mut() {
+            let trailing_white_spaces = text
+                .chars()
+                .rev()
+                .position(|c| c != ' ' && c != '\t')
+                .unwrap_or(text.len());
+
+            match trailing_white_spaces {
+                0 => (),
+                trailing_white_spaces if trailing_white_spaces == text.len() => {
+                    segments.pop();
+                }
+                trailing_white_spaces => *text = &text[0..text.len() - trailing_white_spaces],
+            }
+        }
 
         Ok(lir::Text { segments })
     }
@@ -212,7 +228,7 @@ mod tests {
         });
         assert_eq!(lir::Statement::parse(pair, &prec()).unwrap(), expected);
 
-        let pair = statement_pair(r###"###  ~~Strikethrough~~"###);
+        let pair = statement_pair(r###"###  ~~Strikethrough~~  "###);
         let expected = lir::Statement::Header(lir::HeaderStatement {
             header_type: lir::HeaderType::H3,
             text: lir::Text {
@@ -236,7 +252,15 @@ mod tests {
         });
         assert_eq!(lir::Statement::parse(pair, &prec()).unwrap(), expected);
 
-        let pair = statement_pair(r###"   lorem __**ipsum**__!"###);
+        let pair = statement_pair(r###"trailing tabs		"###);
+        let expected = lir::Statement::Paragraph(lir::ParagraphStatement {
+            text: lir::Text {
+                segments: vec![lir::TextSegment::Text("trailing tabs")],
+            },
+        });
+        assert_eq!(lir::Statement::parse(pair, &prec()).unwrap(), expected);
+
+        let pair = statement_pair(r###"   lorem __**ipsum**__! "###);
         let expected = lir::Statement::Paragraph(lir::ParagraphStatement {
             text: lir::Text {
                 segments: vec![
