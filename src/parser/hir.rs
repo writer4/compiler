@@ -12,6 +12,7 @@ pub fn parse<'a>(document: &lir::Document<'a>) -> Result<hir::Document<'a>> {
     while idx < document.statements.len() {
         match &document.statements[idx] {
             lir::Statement::EmptyLine(_) => idx += 1,
+            lir::Statement::Comment(_) => idx += 1,
             lir::Statement::Header(header_stmt) => {
                 statements.push(hir::Statement::Header(parse_header_statement(header_stmt)?));
                 idx += 1;

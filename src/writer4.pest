@@ -20,8 +20,12 @@ emph = _{ emph_bold | emph_italic | emph_strikethrough }
 text_segment = { (!emph ~ !statement_end ~ ANY)+ }
 text = { (!statement_end ~ emph* ~ text_segment?)* }
 
+// Comment text
+comment_text = { (!statement_end ~ ANY)* }
+
 // Statements
 empty_line_statement = { ws0 ~ statement_end }
+comment_statement = { ws0 ~ "//" ~ comment_text ~ statement_end }
 header_statement = {
     number_sign ~ number_sign? ~ number_sign? ~
     number_sign? ~ number_sign? ~ number_sign? ~
@@ -31,7 +35,11 @@ paragraph_statement = { text ~ statement_end }
 list_item_statement = { indentation ~ "-" ~ (ws1 ~ text)? ~ statement_end }
 
 statement = {
-    empty_line_statement | header_statement | list_item_statement | paragraph_statement
+    empty_line_statement |
+    comment_statement |
+    header_statement |
+    list_item_statement |
+    paragraph_statement
 }
 
 // Document

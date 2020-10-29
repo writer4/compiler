@@ -68,6 +68,9 @@ impl<'a> Parse<'a> for lir::Statement<'a> {
 
         let statement = match statement.as_rule() {
             Rule::empty_line_statement => lir::Statement::EmptyLine(lir::EmptyLineStatement),
+            Rule::comment_statement => lir::Statement::Comment(lir::CommentStatement {
+                text: statement.into_inner().next().unwrap().as_str(),
+            }),
             Rule::header_statement => {
                 let mut header_statement = statement.into_inner();
                 let mut header_type = 0;
@@ -168,6 +171,8 @@ mod tests {
 lorem ipsum
 alpha beta 123!
 
+// lorem
+//
 ## h2
 text"###;
 

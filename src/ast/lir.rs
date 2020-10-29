@@ -8,6 +8,7 @@ pub struct Document<'a> {
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum Statement<'a> {
     EmptyLine(EmptyLineStatement),
+    Comment(CommentStatement<'a>),
     Header(HeaderStatement<'a>),
     Paragraph(ParagraphStatement<'a>),
     ListItem(ListItemStatement<'a>),
@@ -15,6 +16,11 @@ pub enum Statement<'a> {
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct EmptyLineStatement;
+
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct CommentStatement<'a> {
+    pub text: &'a str,
+}
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct HeaderStatement<'a> {
