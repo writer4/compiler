@@ -240,7 +240,7 @@ mod tests {
         let expected = lir::Statement::Paragraph(lir::ParagraphStatement {
             text: lir::Text {
                 segments: vec![
-                    lir::TextSegment::Text("   lorem "),
+                    lir::TextSegment::Text("lorem "),
                     lir::TextSegment::Emphasis(lir::Emphasis::Italic),
                     lir::TextSegment::Emphasis(lir::Emphasis::Bold),
                     lir::TextSegment::Text("ipsum"),
@@ -402,7 +402,6 @@ alpha beta 123!
                 lir::Statement::Paragraph(lir::ParagraphStatement {
                     text: lir::Text {
                         segments: vec![
-                            lir::TextSegment::Text("  "),
                             lir::TextSegment::Emphasis(lir::Emphasis::Bold),
                             lir::TextSegment::Text("12345"),
                             lir::TextSegment::Emphasis(lir::Emphasis::Bold),

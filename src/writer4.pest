@@ -31,7 +31,7 @@ header_statement = {
     number_sign? ~ number_sign? ~ number_sign? ~
     ws1 ~ text ~ statement_end
 }
-paragraph_statement = { text ~ statement_end }
+paragraph_statement = { ws0 ~ text ~ statement_end }
 list_item_statement = { indentation ~ "-" ~ (ws1 ~ text)? ~ statement_end }
 
 statement = {
