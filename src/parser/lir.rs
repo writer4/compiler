@@ -119,7 +119,7 @@ impl<'a> Parse<'a> for lir::Text<'a> {
         assert!(pair.as_rule() == Rule::text);
         let text = pair.into_inner();
 
-        let segments = text
+        let mut segments = text
             .map(|pair| match pair.as_rule() {
                 Rule::emph_bold => lir::TextSegment::Emphasis(lir::Emphasis::Bold),
                 Rule::emph_italic => lir::TextSegment::Emphasis(lir::Emphasis::Italic),
