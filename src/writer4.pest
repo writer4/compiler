@@ -27,7 +27,7 @@ comment_text = { (!statement_end ~ ANY)* }
 empty_line_statement = { ws0 ~ statement_end }
 comment_statement = { ws0 ~ "//" ~ comment_text ~ statement_end }
 header_statement = {
-    number_sign ~ number_sign? ~ number_sign? ~
+    ws0 ~ number_sign ~ number_sign? ~ number_sign? ~
     number_sign? ~ number_sign? ~ number_sign? ~
     ws1 ~ text ~ statement_end
 }

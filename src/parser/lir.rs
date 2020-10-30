@@ -222,6 +222,15 @@ mod tests {
         });
         assert_eq!(lir::Statement::parse(pair, &prec()).unwrap(), expected);
 
+        let pair = statement_pair(r###"  ###   Subtitle "###);
+        let expected = lir::Statement::Header(lir::HeaderStatement {
+            header_type: lir::HeaderType::H3,
+            text: lir::Text {
+                segments: vec![lir::TextSegment::Text("Subtitle")],
+            },
+        });
+        assert_eq!(lir::Statement::parse(pair, &prec()).unwrap(), expected);
+
         let pair = statement_pair(r###"######   __%&%}[{~~__"###);
         let expected = lir::Statement::Header(lir::HeaderStatement {
             header_type: lir::HeaderType::H6,
