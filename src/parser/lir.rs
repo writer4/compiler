@@ -175,6 +175,14 @@ mod tests {
         let pair = statement_pair(r###"     "###);
         let expected = lir::Statement::EmptyLine(lir::EmptyLineStatement);
         assert_eq!(lir::Statement::parse(pair, &prec()).unwrap(), expected);
+
+        let pair = statement_pair(r###"	"###);
+        let expected = lir::Statement::EmptyLine(lir::EmptyLineStatement);
+        assert_eq!(lir::Statement::parse(pair, &prec()).unwrap(), expected);
+
+        let pair = statement_pair(r###" 		 "###);
+        let expected = lir::Statement::EmptyLine(lir::EmptyLineStatement);
+        assert_eq!(lir::Statement::parse(pair, &prec()).unwrap(), expected);
     }
 
     #[test]
