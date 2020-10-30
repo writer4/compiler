@@ -33,12 +33,14 @@ header_statement = {
 }
 paragraph_statement = { ws0 ~ text ~ statement_end }
 list_item_statement = { indentation ~ "-" ~ (ws1 ~ text)? ~ statement_end }
+horizontal_rule_statement = { ws0 ~ "---" ~ "-"* ~ ws0 ~ statement_end }
 
 statement = {
     empty_line_statement |
     comment_statement |
     header_statement |
     list_item_statement |
+    horizontal_rule_statement |
     paragraph_statement
 }
 

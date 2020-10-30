@@ -107,6 +107,9 @@ impl<'a> Parse<'a> for lir::Statement<'a> {
                     text,
                 })
             }
+            Rule::horizontal_rule_statement => {
+                lir::Statement::HorizontalRule(lir::HorizontalRuleStatement)
+            }
             _ => unreachable!(),
         };
 
@@ -308,6 +311,14 @@ mod tests {
             },
         });
         assert_eq!(lir::Statement::parse(pair, &prec()).unwrap(), expected);
+
+        let pair = statement_pair(r###"--- --"###);
+        let expected = lir::Statement::Paragraph(lir::ParagraphStatement {
+            text: lir::Text {
+                segments: vec![lir::TextSegment::Text("--- --")],
+            },
+        });
+        assert_eq!(lir::Statement::parse(pair, &prec()).unwrap(), expected);
     }
 
     #[test]
@@ -346,6 +357,25 @@ mod tests {
     }
 
     #[test]
+    fn horizontal_rule() {
+        let pair = statement_pair(r###"---"###);
+        let expected = lir::Statement::HorizontalRule(lir::HorizontalRuleStatement);
+        assert_eq!(lir::Statement::parse(pair, &prec()).unwrap(), expected);
+
+        let pair = statement_pair(r###" ---  "###);
+        let expected = lir::Statement::HorizontalRule(lir::HorizontalRuleStatement);
+        assert_eq!(lir::Statement::parse(pair, &prec()).unwrap(), expected);
+
+        let pair = statement_pair(r###"-------- "###);
+        let expected = lir::Statement::HorizontalRule(lir::HorizontalRuleStatement);
+        assert_eq!(lir::Statement::parse(pair, &prec()).unwrap(), expected);
+
+        let pair = statement_pair(r###"    ---"###);
+        let expected = lir::Statement::HorizontalRule(lir::HorizontalRuleStatement);
+        assert_eq!(lir::Statement::parse(pair, &prec()).unwrap(), expected);
+    }
+
+    #[test]
     fn empty() {
         let code = r###""###;
         let expected = lir::Document { statements: vec![] };
@@ -376,6 +406,9 @@ alpha beta 123!
 - E
 
 - F
+
+----
+ --- 
 
 ## h2
 ..."###;
@@ -464,6 +497,9 @@ alpha beta 123!
                         segments: vec![lir::TextSegment::Text("F")],
                     },
                 }),
+                lir::Statement::EmptyLine(lir::EmptyLineStatement),
+                lir::Statement::HorizontalRule(lir::HorizontalRuleStatement),
+                lir::Statement::HorizontalRule(lir::HorizontalRuleStatement),
                 lir::Statement::EmptyLine(lir::EmptyLineStatement),
                 lir::Statement::Header(lir::HeaderStatement {
                     header_type: lir::HeaderType::H2,

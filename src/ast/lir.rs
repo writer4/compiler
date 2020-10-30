@@ -12,6 +12,7 @@ pub enum Statement<'a> {
     Header(HeaderStatement<'a>),
     Paragraph(ParagraphStatement<'a>),
     ListItem(ListItemStatement<'a>),
+    HorizontalRule(HorizontalRuleStatement),
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -38,6 +39,9 @@ pub struct ListItemStatement<'a> {
     pub indentation: usize,
     pub text: Text<'a>,
 }
+
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct HorizontalRuleStatement;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Text<'a> {

@@ -10,6 +10,7 @@ pub enum Statement<'a> {
     Header(HeaderStatement<'a>),
     Paragraph(ParagraphStatement<'a>),
     List(ListStatement<'a>),
+    HorizontalRule(HorizontalRuleStatement),
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -27,6 +28,9 @@ pub struct ParagraphStatement<'a> {
 pub struct ListStatement<'a> {
     pub list: List<'a>,
 }
+
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct HorizontalRuleStatement;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct List<'a> {

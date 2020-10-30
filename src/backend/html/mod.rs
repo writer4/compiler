@@ -41,6 +41,7 @@ impl super::Backend for HtmlBackend {
                 hir::Statement::List(hir::ListStatement { list }) => {
                     generate_list(list, &mut output);
                 }
+                hir::Statement::HorizontalRule(_) => output += "<hr>",
             }
         }
 

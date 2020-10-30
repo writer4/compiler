@@ -56,6 +56,10 @@ pub fn parse<'a>(document: &lir::Document<'a>) -> Result<hir::Document<'a>> {
                     list: parse_list(&list_statements)?,
                 }));
             }
+            lir::Statement::HorizontalRule(_) => {
+                statements.push(hir::Statement::HorizontalRule(hir::HorizontalRuleStatement));
+                idx += 1;
+            }
         }
     }
 
