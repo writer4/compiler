@@ -72,7 +72,7 @@ fn generate_list_item(list_item: &hir::ListItem<'_>, output: &mut String) {
 fn generate_text(segment: &hir::TextSegment<'_>, output: &mut String) {
     match segment {
         hir::TextSegment::Text(text) => *output += &html_escape::encode_text(text),
-        hir::TextSegment::Break => *output += "<br />",
+        hir::TextSegment::Break => *output += "<br>",
         hir::TextSegment::Emphasised { emphasis, inner } => {
             let (tag_opening, tag_closing) = match emphasis {
                 hir::Emphasis::Bold => ("<b>", "</b>"),
